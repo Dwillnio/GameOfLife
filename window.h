@@ -5,12 +5,15 @@
 #include <QPainter>
 #include <QTimer>
 #include <QKeyEvent>
+#include <chrono>
 
 #include "game.h"
 
 #define CELL_WIDTH 2
 #define TIMER_LENGTH 30
 #define TIMER_ADJUST 1.3
+
+#define DEBUG_WINDOW
 
 class window : public QWidget
 {
@@ -29,6 +32,10 @@ protected:
 private:
     QTimer t;
     game* gm;
+
+#ifdef DEBUG_WINDOW
+    std::chrono::steady_clock::time_point time;
+#endif
 
     int timer_len;
 };

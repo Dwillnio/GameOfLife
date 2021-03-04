@@ -1,4 +1,5 @@
 #include "window.h"
+#include <iostream>
 
 window::window(game* gm_, QWidget* parent) : QWidget(parent), t(this), gm(gm_)
 {
@@ -7,6 +8,7 @@ window::window(game* gm_, QWidget* parent) : QWidget(parent), t(this), gm(gm_)
     connect(&t, SIGNAL(timeout()), this, SLOT(timerupdate()));
     gm->generate();
     timer_len = TIMER_LENGTH;
+    time = std::chrono::steady_clock::now();
 }
 
 
@@ -50,6 +52,11 @@ void window::mousePressEvent(QMouseEvent* event)
 
 void window::timerupdate()
 {
+#ifdef DEBUG_WINDOW
+    std::chrono::steady_clock::time_point new_time = std::chrono::steady_clock::now();
+    std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(new_time-time).count() << " ms frametime\t";
+    time = new_time;
+#endif
     update();
     (*gm)++;
 }
