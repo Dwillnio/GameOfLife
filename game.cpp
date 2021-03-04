@@ -1,5 +1,7 @@
 #include "game.h"
 
+#include <thread>
+
 game::game(int height_, int width_, rule* r_, bool boundary_)
     : m(height_), n(width_),boundary(boundary_), r(r_)
 {
@@ -84,6 +86,79 @@ void game::step()
             }
         }
     }
+
+    cells = temp;
+}
+
+void game::enable_multithreading(bool en, int amnt)
+{
+    multi_thread = en;
+    thread_num = amnt;
+}
+
+void game::calc_m(game* gm, std::vector<std::vector<int>>* temp, int num, int total_threads)
+{
+    std::vector<int> neighbours(9,0);
+    game& g = *gm;
+
+    for(int i=num; i<g.m; i+=total_threads){
+        for(int j=0; j<g.n; j++){
+            if(g.boundary){
+                std::fill(neighbours.begin(),neighbours.end(), 0);
+                neighbours[8] = g.cells[i][j];
+                if(i>0){
+                    neighbours[0] = g.cells[i-1][j];
+                    if(j>0)
+                        neighbours[7] = g.cells[i-1][j-1];
+                    if(j<g.n-1)
+                        neighbours[1] = g.cells[i-1][j+1];
+                }
+                if(i<g.m-1){
+                    neighbours[4] = g.cells[i+1][j];
+                    if(j>0)
+                        neighbours[5] = g.cells[i+1][j-1];
+                    if(j<g.n-1)
+                        neighbours[3] = g.cells[i+1][j+1];
+                }
+                if(j<g.n-1)
+                    neighbours[2] = g.cells[i][j+1];
+                if(j>0)
+                    neighbours[6] = g.cells[i][j-1];
+
+                (*temp)[i][j] = g.r->calculate(neighbours);
+            } else {
+                neighbours[8] = g.cells[i][j];
+
+                neighbours[0] = g.cells[mod(i-1,g.m)][j];
+                neighbours[1] = g.cells[mod(i-1,g.m)][mod(j+1,g.n)];
+                neighbours[7] = g.cells[mod(i-1,g.m)][mod(j-1,g.n)];
+
+                neighbours[4] = g.cells[mod(i+1,g.m)][j];
+                neighbours[3] = g.cells[mod(i+1,g.m)][mod(j+1,g.n)];
+                neighbours[5] = g.cells[mod(i+1,g.m)][mod(j-1,g.n)];
+
+                neighbours[2] = g.cells[i][mod(j+1,g.n)];
+                neighbours[6] = g.cells[i][mod(j-1,g.n)];
+
+                (*temp)[i][j] = g.r->calculate(neighbours);
+            }
+        }
+    }
+}
+
+//void skip(int m){m;}
+
+void game::step_m()
+{
+    std::vector<std::vector<int>> temp(cells);
+
+    std::vector<std::thread> threads;
+    for(int i=0; i<thread_num; i++)
+        threads.push_back(std::thread(calc_m,this, &temp, i, thread_num));
+        //threads.push_back(std::thread(skip, 1));
+
+    for(int i=0; i<threads.size(); i++)
+        threads[i].join();
 
     cells = temp;
 }

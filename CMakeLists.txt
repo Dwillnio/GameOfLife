@@ -10,6 +10,7 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
 find_package(Qt5 COMPONENTS Widgets Charts REQUIRED)
+find_package(Threads REQUIRED)
 
 include_directories(
     .
@@ -28,4 +29,5 @@ add_executable(GameOfLife
     rule.h
 )
 
+target_link_libraries(GameOfLife Threads::Threads)
 target_link_libraries(GameOfLife Qt5::Widgets Qt5::Charts)
