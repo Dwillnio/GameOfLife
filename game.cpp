@@ -1,6 +1,7 @@
 #include "game.h"
 
 #include <thread>
+#include <chrono>
 
 game::game(int height_, int width_, rule* r_, bool boundary_)
     : m(height_), n(width_),boundary(boundary_), r(r_)
@@ -28,6 +29,24 @@ int mod(int a, int b)
     if (ret < 0)
         ret += b;
     return ret;
+}
+
+
+#define DEBUG
+
+void game::operator++ (int)
+{
+#ifdef DEBUG
+    std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
+#endif
+
+    multi_thread ? step_m() : step();
+
+#ifdef DEBUG
+
+    std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
+    std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count() << " ms\n";
+#endif
 }
 
 //701
@@ -71,16 +90,37 @@ void game::step()
                 //std::fill(neighbours.begin(),neighbours.end(), 0);
                 neighbours[8] = cells[i][j];
 
-                neighbours[0] = cells[mod(i-1,m)][j];
-                neighbours[1] = cells[mod(i-1,m)][mod(j+1,n)];
-                neighbours[7] = cells[mod(i-1,m)][mod(j-1,n)];
+//                neighbours[0] = cells[mod(i-1,m)][j];
+//                neighbours[1] = cells[mod(i-1,m)][mod(j+1,n)];
+//                neighbours[7] = cells[mod(i-1,m)][mod(j-1,n)];
 
-                neighbours[4] = cells[mod(i+1,m)][j];
-                neighbours[3] = cells[mod(i+1,m)][mod(j+1,n)];
-                neighbours[5] = cells[mod(i+1,m)][mod(j-1,n)];
+//                neighbours[4] = cells[mod(i+1,m)][j];
+//                neighbours[3] = cells[mod(i+1,m)][mod(j+1,n)];
+//                neighbours[5] = cells[mod(i+1,m)][mod(j-1,n)];
 
-                neighbours[2] = cells[i][mod(j+1,n)];
-                neighbours[6] = cells[i][mod(j-1,n)];
+//                neighbours[2] = cells[i][mod(j+1,n)];
+//                neighbours[6] = cells[i][mod(j-1,n)];
+
+                int im, ip, jm, jp;
+                if(i==0) im = m-1;
+                else im = i-1;
+                if(i==m-1) ip = 0;
+                else ip = i+1;
+                if(j==0) jm = n-1;
+                else jm = j-1;
+                if(j==n-1) jp = 0;
+                else jp = j+1;
+
+                neighbours[0] = cells[im][j];
+                neighbours[1] = cells[im][jp];
+                neighbours[7] = cells[im][jm];
+
+                neighbours[4] = cells[ip][j];
+                neighbours[3] = cells[ip][jp];
+                neighbours[5] = cells[ip][jm];
+
+                neighbours[2] = cells[i][jp];
+                neighbours[6] = cells[i][jm];
 
                 temp[i][j] = r->calculate(neighbours);
             }
@@ -129,24 +169,43 @@ void game::calc_m(game* gm, std::vector<std::vector<int>>* temp, int num, int to
             } else {
                 neighbours[8] = g.cells[i][j];
 
-                neighbours[0] = g.cells[mod(i-1,g.m)][j];
-                neighbours[1] = g.cells[mod(i-1,g.m)][mod(j+1,g.n)];
-                neighbours[7] = g.cells[mod(i-1,g.m)][mod(j-1,g.n)];
+//                neighbours[0] = g.cells[mod(i-1,g.m)][j];
+//                neighbours[1] = g.cells[mod(i-1,g.m)][mod(j+1,g.n)];
+//                neighbours[7] = g.cells[mod(i-1,g.m)][mod(j-1,g.n)];
 
-                neighbours[4] = g.cells[mod(i+1,g.m)][j];
-                neighbours[3] = g.cells[mod(i+1,g.m)][mod(j+1,g.n)];
-                neighbours[5] = g.cells[mod(i+1,g.m)][mod(j-1,g.n)];
+//                neighbours[4] = g.cells[mod(i+1,g.m)][j];
+//                neighbours[3] = g.cells[mod(i+1,g.m)][mod(j+1,g.n)];
+//                neighbours[5] = g.cells[mod(i+1,g.m)][mod(j-1,g.n)];
 
-                neighbours[2] = g.cells[i][mod(j+1,g.n)];
-                neighbours[6] = g.cells[i][mod(j-1,g.n)];
+//                neighbours[2] = g.cells[i][mod(j+1,g.n)];
+//                neighbours[6] = g.cells[i][mod(j-1,g.n)];
+
+                int im, ip, jm, jp;
+                if(i==0) im = g.m-1;
+                else im = i-1;
+                if(i==g.m-1) ip = 0;
+                else ip = i+1;
+                if(j==0) jm = g.n-1;
+                else jm = j-1;
+                if(j==g.n-1) jp = 0;
+                else jp = j+1;
+
+                neighbours[0] = g.cells[im][j];
+                neighbours[1] = g.cells[im][jp];
+                neighbours[7] = g.cells[im][jm];
+
+                neighbours[4] = g.cells[ip][j];
+                neighbours[3] = g.cells[ip][jp];
+                neighbours[5] = g.cells[ip][jm];
+
+                neighbours[2] = g.cells[i][jp];
+                neighbours[6] = g.cells[i][jm];
 
                 (*temp)[i][j] = g.r->calculate(neighbours);
             }
         }
     }
 }
-
-//void skip(int m){m;}
 
 void game::step_m()
 {
@@ -157,7 +216,7 @@ void game::step_m()
         threads.push_back(std::thread(calc_m,this, &temp, i, thread_num));
         //threads.push_back(std::thread(skip, 1));
 
-    for(int i=0; i<threads.size(); i++)
+    for(int i=0; i<(int)threads.size(); i++)
         threads[i].join();
 
     cells = temp;

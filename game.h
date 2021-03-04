@@ -8,7 +8,7 @@
 
 #include "rule.h"
 
-static char game_txt[2] = {' ','x'};
+static const char game_txt[2] = {' ','x'};
 
 class game
 {
@@ -29,7 +29,7 @@ public:
     static void calc_m(game* g, std::vector<std::vector<int>>* data, int beg, int end);
 
     int operator() (int i, int j) const {return cells[i][j];}
-    void operator++ (int) {multi_thread ? step_m() : step();}
+    void operator++ (int);
 
     int height() const {return m;}
     int width() const {return n;}
